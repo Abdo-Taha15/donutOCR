@@ -1,0 +1,8 @@
+python-dotenv
+pandas
+requests
+pillow
+pdf2image
+paddlepaddle==2.5.1 -i https://mirror.baidu.com/pypi/simple
+paddleocr>=2.0.1
+donut-python
