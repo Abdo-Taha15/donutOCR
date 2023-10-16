@@ -43,7 +43,7 @@ def resize_image(img: Image.Image):
 
 def create_dir(img: Image.Image, row: pd.Series, path: Path):
     results = ocr.ocr(np.asarray(img), det=False, rec=False, cls=True)
-    orientation, conf = results[0][0]
+    orientation, conf = results[0]
     orientation = int(orientation)
 
     img_dir = {

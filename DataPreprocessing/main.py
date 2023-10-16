@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from PIL import Image
 import json
+from tqdm import tqdm
 
 from utils import (
     download_file,
@@ -29,7 +30,7 @@ df["ocr_text"] = [
 ]
 
 # * Take n of random images from the dataset
-df = df.sample(n=100, random_state=42)
+df = df.sample(n=10000, random_state=42)
 
 # * Remove duplicates
 df.drop_duplicates(subset=["file_hash"], inplace=True)
@@ -38,37 +39,44 @@ df.drop_duplicates(subset=["file_hash"], inplace=True)
 df["extension"] = df["url"].apply(lambda row: row.split(".")[-1])
 
 dataset = []
-for idx, row in df.iterrows():
+for idx, row in tqdm(df.iterrows(), total=df.shape[0]):
     if row["extension"] in SUPPORTED_EXTENSIONS:
         url = os.environ["BASE_URL"] + f"/{row['url']}"
         path: Path = download_file(url, name=f"{row['id']}.{row['extension']}")
         if row["extension"] in ["pdf", "PDF"]:
-            pages = convert_pdf_to_image(path)
-            if len(pages) > 1:
+            try:
+                pages = convert_pdf_to_image(path)
+                if len(pages) > 1:
+                    path.unlink()
+                    continue
+                else:
+                    for page in pages:
+                        resize_image(page)
+                        dataset.append(
+                            create_dir(
+                                page.convert("RGB"),
+                                row,
+                                Path(str(path).split(".")[0] + ".jpg"),
+                            )
+                        )
+                    path.unlink()
+            except:
                 path.unlink()
                 continue
-            else:
-                for page in pages:
-                    resize_image(page)
-                    dataset.append(
-                        create_dir(
-                            page.convert("RGB"),
-                            row,
-                            Path(str(path).split(".")[0] + ".jpg"),
-                        )
-                    )
-                path.unlink()
         else:
-            img = Image.open(path)
-            resize_image(img)
-            dataset.append(
-                create_dir(
-                    img.convert("RGB"), row, Path(str(path).split(".")[0] + ".jpg")
+            try:
+                img = Image.open(path)
+                resize_image(img)
+                dataset.append(
+                    create_dir(
+                        img.convert("RGB"), row, Path(str(path).split(".")[0] + ".jpg")
+                    )
                 )
-            )
-            if row["extension"] != "jpg":
+                if row["extension"] != "jpg":
+                    path.unlink()
+            except:
                 path.unlink()
-
+                continue
 
 with open("dataset/metadata.jsonl", "w") as outfile:
     for entry in dataset:
