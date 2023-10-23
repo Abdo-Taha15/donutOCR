@@ -3,7 +3,12 @@ pandas
 requests
 pillow
 pdf2image
-paddlepaddle==2.5.1 -i https://mirror.baidu.com/pypi/simple
+paddlepaddle -i https://mirror.baidu.com/pypi/simple
 paddleocr>=2.0.1
-donut-python
+torch==1.11.0
+torchvision==0.12.0
+pytorch-lightning==1.6.4
+transformers==4.11.3
+timm==0.5.4
+donut-python==1.0.1
 tensorboard
